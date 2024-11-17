@@ -5,11 +5,15 @@ class Maze:
         self._maze_width = len(self._maze[0])
         self._start, self._stop = self._find_start_and_stop_coords()
 
-    def get_processed_maze(self):
+    def processed_maze(self):
         return self._maze
 
     def get_maze_shape(self):
-        return self._maze_height, self._maze_width
+        '''
+
+        :return: width, height
+        '''
+        return self._maze_width, self._maze_height
 
     def get_start(self):
         return self._start
