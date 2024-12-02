@@ -298,18 +298,3 @@ class JPS(InformedSolver):
             if (0 < column_right < width-1) and (self._maze.processed_maze()[current_row][column_right] == 0):
                 is_jump_point = True
         return is_jump_point
-
-    def _get_heuristic(self, node, method='manhattan'):
-        get_row, get_column = itemgetter(0), itemgetter(1)
-        stop_node = self._maze.get_stop()
-        if method == 'manhattan':
-            x = abs(get_row(stop_node) - get_row(node.data))
-            y = abs(get_column(stop_node) - get_column(node.data))
-            value = x + y
-        elif method == 'euclid':
-            x = (get_row(node.data) - get_row(stop_node))**2
-            y = (get_column(node.data) - get_column(stop_node)) ** 2
-            value = (x + y)**0.5
-        else:
-            raise NameError('No such method for heuristic function.')
-        return value + node.cost
