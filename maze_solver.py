@@ -1,6 +1,7 @@
 from operator import itemgetter
 from queue import PriorityQueue
 from PIL import Image, ImageDraw
+from typing import List, Union
 
 from data_sctructures.base_maze import Maze
 from data_sctructures.node import Node
@@ -153,6 +154,7 @@ class InformedSolver(UninformedSolver):
         return value + node.cost
 
 class JPS(InformedSolver):
+    # Possible actions for JPS maze solver
     ACTIONS = {
         'up': (-1, 0),
         'down': (1, 0),
@@ -164,40 +166,23 @@ class JPS(InformedSolver):
         'lower-right': (1, 1),
     }
 
-    def __init__(self, file_path):
+    def __init__(self, file_path: str):
+        """
+        Create JPS maze solver object.
+
+        :param file_path: path to text file with target maze
+        """
+
         super().__init__(file_path)
 
-    def solve(self, heuristic_method: str = 'manhattan', show_explored: bool = False):
-        if heuristic_method not in self.HEURISTIC_METHODS:
-            raise NameError('No such heuristic method.')
-        solution, explored = self._solve_maze(method=heuristic_method)
-        print(len(explored), explored)
-        self._save_solution_to_jpeg(solution, explored, heuristic_method, show_explored)
+    def _expand_node(self, node: Node) -> List[Node]:
+        """
+        Find possible node neighbors to move to.
 
-    def _solve_maze(self, method: str = 'manhattan'):
-        queue = PriorityQueue()
-        explored = set()
-        start_node = Node(data=self._maze.get_start())
-        stop_node = self._maze.get_stop()
-        found_node = None
+        :param node: node to expand
+        :return: list of node possible neighbors
+        """
 
-        queue.put((self._get_heuristic(start_node, method=method), id(start_node), start_node))
-
-        while not queue.empty():
-            _, _, node = queue.get()
-            explored.add(node.data)
-            if node.data == stop_node:
-                found_node = node
-                break
-            else:
-                neighbors = self._get_jump_points(node)
-                for neighbor in neighbors:
-                    if neighbor.data not in explored:
-                        queue.put((self._get_heuristic(neighbor, method=method), id(neighbor), neighbor))
-        solution = self._get_solution_path(found_node)
-        return solution, explored
-
-    def _get_jump_points(self, node):
         jump_points = []
         for action_name in self.ACTIONS:
             jump_point = self._jump(node, action_name)
@@ -205,7 +190,7 @@ class JPS(InformedSolver):
                 jump_points.append(jump_point)
         return jump_points
 
-    def _jump(self, node, action_name):
+    def _jump(self, node: Node, action_name: str) -> Union[Node, None]:
         jump_point = None
         get_row, get_column = itemgetter(0), itemgetter(1)
         current_row, current_column = get_row(node.data), get_column(node.data)
@@ -250,7 +235,7 @@ class JPS(InformedSolver):
                 jump_point = new_node
         return jump_point
 
-    def _is_jump_point(self, node, action_name):
+    def _is_jump_point(self, node: Node, action_name: str) -> bool:
         is_jump_point = False
         get_row, get_column = itemgetter(0), itemgetter(1)
         current_row, current_column = get_row(node.data), get_column(node.data)
