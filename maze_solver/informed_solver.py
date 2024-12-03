@@ -6,21 +6,41 @@ from .uninformed_solver import UninformedSolver
 from .data_structure.node import Node
 
 class InformedSolver(UninformedSolver):
+    # Possible heuristic methods
     HEURISTIC_METHODS = (
         'manhattan',
         'euclid',
     )
 
     def __init__(self, file_path):
+        """
+        Create informed maze solver object.
+
+        :param file_path: path to text file with target maze
+        """
+
         super().__init__(file_path)
 
-    def solve(self, heuristic_method: str = 'manhattan', show_explored: bool = False):
+    def solve(self, heuristic_method: str = 'manhattan', show_explored: bool = False) -> None:
+        """
+        Solve maze with A* algorithm and chosen heuristic method.
+
+        :param heuristic_method: heuristic method to use
+        :param show_explored: show explored nodes
+        """
+
         if heuristic_method not in self.HEURISTIC_METHODS:
             raise NameError('No such heuristic method.')
         solution, explored = self._solve_maze(method=heuristic_method)
         self._save_solution_to_jpeg(solution, explored, heuristic_method, show_explored)
 
     def _solve_maze(self, method):
+        """
+        Solve maze with chosen uninformed algorithm.
+
+        :param alg_name: uninformed algorithm name
+        :param show_explored: show explored nodes
+        """
         queue = PriorityQueue()
         explored = set()
         start_node = Node(data=self._maze.get_start())
@@ -43,7 +63,14 @@ class InformedSolver(UninformedSolver):
         solution = self._get_solution_path(found_node)
         return solution, explored
 
-    def _get_heuristic(self, node, method='manhattan'):
+    def _get_heuristic(self, node, method='manhattan') -> Union[int, float]:
+        """
+        Get heuristic value of a node.
+
+        :param node: node to get heuristic for
+        :param method: heuristic method to use
+        :return: heuristic value of a node
+        """
         get_row, get_column = itemgetter(0), itemgetter(1)
         stop_node = self._maze.get_stop()
         if method == 'manhattan':
@@ -90,12 +117,20 @@ class JPS(InformedSolver):
 
         jump_points = []
         for action_name in self.ACTIONS:
-            jump_point = self._jump(node, action_name)
+            jump_point = self._get_jump_points(node, action_name)
             if jump_point is not None:
                 jump_points.append(jump_point)
         return jump_points
 
-    def _jump(self, node: Node, action_name: str) -> Union[Node, None]:
+    def _get_jump_points(self, node: Node, action_name: str) -> Union[Node, None]:
+        """
+        Get jump points of a node.
+
+        :param node: origin node
+        :param action_name: action name for new node
+        :return: jump points of new node
+        """
+
         jump_point = None
         get_row, get_column = itemgetter(0), itemgetter(1)
         current_row, current_column = get_row(node.data), get_column(node.data)
@@ -111,36 +146,44 @@ class JPS(InformedSolver):
                     jump_point = new_node
                 else:
                     if action_name in ['up', 'down', 'left', 'right']:
-                        jump_point = self._jump(new_node, action_name)
+                        jump_point = self._get_jump_points(new_node, action_name)
                     elif action_name == 'upper-right':
-                        jump_point = self._jump(new_node, 'up')
+                        jump_point = self._get_jump_points(new_node, 'up')
                         if jump_point is None:
-                            jump_point = self._jump(new_node, 'right')
+                            jump_point = self._get_jump_points(new_node, 'right')
                         if jump_point is None:
-                            jump_point = self._jump(new_node, 'upper-right')
+                            jump_point = self._get_jump_points(new_node, 'upper-right')
                     elif action_name == 'upper-left':
-                        jump_point = self._jump(new_node, 'up')
+                        jump_point = self._get_jump_points(new_node, 'up')
                         if jump_point is None:
-                            jump_point = self._jump(new_node, 'left')
+                            jump_point = self._get_jump_points(new_node, 'left')
                         if jump_point is None:
-                            jump_point = self._jump(new_node, 'upper-left')
+                            jump_point = self._get_jump_points(new_node, 'upper-left')
                     elif action_name == 'lower-right':
-                        jump_point = self._jump(new_node, 'down')
+                        jump_point = self._get_jump_points(new_node, 'down')
                         if jump_point is None:
-                            jump_point = self._jump(new_node, 'right')
+                            jump_point = self._get_jump_points(new_node, 'right')
                         if jump_point is None:
-                            jump_point = self._jump(new_node, 'lower-right')
+                            jump_point = self._get_jump_points(new_node, 'lower-right')
                     elif action_name == 'lower-left':
-                        jump_point = self._jump(new_node, 'down')
+                        jump_point = self._get_jump_points(new_node, 'down')
                         if jump_point is None:
-                            jump_point = self._jump(new_node, 'left')
+                            jump_point = self._get_jump_points(new_node, 'left')
                         if jump_point is None:
-                            jump_point = self._jump(new_node, 'lower-left')
+                            jump_point = self._get_jump_points(new_node, 'lower-left')
             elif current_position == 'B':
                 jump_point = new_node
         return jump_point
 
     def _is_jump_point(self, node: Node, action_name: str) -> bool:
+        """
+        Check if node is jump point.
+
+        :param node: node to check
+        :param action_name: action name for new node
+        :return: True - if node is jump point, False - otherwise
+        """
+
         is_jump_point = False
         get_row, get_column = itemgetter(0), itemgetter(1)
         current_row, current_column = get_row(node.data), get_column(node.data)
