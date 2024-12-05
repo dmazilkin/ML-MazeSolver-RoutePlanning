@@ -58,13 +58,13 @@ class UninformedSolver:
             for column in range(width):
                 coords = (row, column)
                 if coords == self._maze.get_start():
-                    color = 'yellow'
+                    color = (0, 100, 0)
                 elif coords == self._maze.get_stop():
-                    color = 'blue'
+                    color = (255, 0, 0)
                 elif coords in solution:
-                    color = 'green'
+                    color = (0, 255, 0)
                 elif show_explored and coords in explored:
-                    color = 'red'
+                    color = (255, 160, 122)
                 else:
                     symbol = self._maze.processed_maze()[row][column]
                     if symbol == 1:

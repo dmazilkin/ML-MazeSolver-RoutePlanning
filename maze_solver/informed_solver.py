@@ -41,6 +41,7 @@ class InformedSolver(UninformedSolver):
         :param alg_name: uninformed algorithm name
         :param show_explored: show explored nodes
         """
+
         queue = PriorityQueue()
         explored = set()
         start_node = Node(data=self._maze.get_start())
@@ -71,6 +72,7 @@ class InformedSolver(UninformedSolver):
         :param method: heuristic method to use
         :return: heuristic value of a node
         """
+
         get_row, get_column = itemgetter(0), itemgetter(1)
         stop_node = self._maze.get_stop()
         if method == 'manhattan':
@@ -118,11 +120,11 @@ class JPS(InformedSolver):
         jump_points = []
         for action_name in self.ACTIONS:
             jump_point = self._get_jump_points(node, action_name)
-            if jump_point is not None:
-                jump_points.append(jump_point)
+            if len(jump_point) != 0:
+                jump_points.extend(jump_point)
         return jump_points
 
-    def _get_jump_points(self, node: Node, action_name: str) -> Union[Node, None]:
+    def _get_jump_points(self, node: Node, action_name: str) -> Union[List[Node], List[None]]:
         """
         Get jump points of a node.
 
@@ -131,7 +133,7 @@ class JPS(InformedSolver):
         :return: jump points of new node
         """
 
-        jump_point = None
+        jump_points = []
         get_row, get_column = itemgetter(0), itemgetter(1)
         current_row, current_column = get_row(node.data), get_column(node.data)
         cost_row, cost_column = get_row(self.ACTIONS[action_name]), get_column(self.ACTIONS[action_name])
@@ -143,37 +145,55 @@ class JPS(InformedSolver):
             current_position = self._maze.processed_maze()[row][column]
             if current_position == 1:
                 if self._is_jump_point(new_node, action_name):
-                    jump_point = new_node
+                    jump_points.append(new_node)
                 else:
                     if action_name in ['up', 'down', 'left', 'right']:
                         jump_point = self._get_jump_points(new_node, action_name)
+                        if len(jump_point) != 0:
+                            jump_points.extend(jump_point)
                     elif action_name == 'upper-right':
-                        jump_point = self._get_jump_points(new_node, 'up')
-                        if jump_point is None:
-                            jump_point = self._get_jump_points(new_node, 'right')
-                        if jump_point is None:
-                            jump_point = self._get_jump_points(new_node, 'upper-right')
+                        jump_point_up = self._get_jump_points(new_node, 'up')
+                        jump_point_right = self._get_jump_points(new_node, 'right')
+                        jump_point_ur = self._get_jump_points(new_node, 'upper-right')
+                        if len(jump_point_up) != 0:
+                            jump_points.extend(jump_point_up)
+                        if len(jump_point_right) != 0:
+                            jump_points.extend(jump_point_right)
+                        if len(jump_point_ur) != 0:
+                                jump_points.extend(jump_point_ur)
                     elif action_name == 'upper-left':
-                        jump_point = self._get_jump_points(new_node, 'up')
-                        if jump_point is None:
-                            jump_point = self._get_jump_points(new_node, 'left')
-                        if jump_point is None:
-                            jump_point = self._get_jump_points(new_node, 'upper-left')
+                        jump_point_up = self._get_jump_points(new_node, 'up')
+                        jump_point_left = self._get_jump_points(new_node, 'left')
+                        jump_point_ul = self._get_jump_points(new_node, 'upper-left')
+                        if len(jump_point_up) != 0:
+                            jump_points.extend(jump_point_up)
+                        if len(jump_point_left) != 0:
+                            jump_points.extend(jump_point_left)
+                        if len(jump_point_ul) != 0:
+                                jump_points.extend(jump_point_ul)
                     elif action_name == 'lower-right':
-                        jump_point = self._get_jump_points(new_node, 'down')
-                        if jump_point is None:
-                            jump_point = self._get_jump_points(new_node, 'right')
-                        if jump_point is None:
-                            jump_point = self._get_jump_points(new_node, 'lower-right')
+                        jump_point_down = self._get_jump_points(new_node, 'down')
+                        jump_point_right = self._get_jump_points(new_node, 'right')
+                        jump_point_dr = self._get_jump_points(new_node, 'lower-right')
+                        if len(jump_point_down) != 0:
+                            jump_points.extend(jump_point_down)
+                        if len(jump_point_right) != 0:
+                            jump_points.extend(jump_point_right)
+                        if len(jump_point_dr) != 0:
+                                jump_points.extend(jump_point_dr)
                     elif action_name == 'lower-left':
-                        jump_point = self._get_jump_points(new_node, 'down')
-                        if jump_point is None:
-                            jump_point = self._get_jump_points(new_node, 'left')
-                        if jump_point is None:
-                            jump_point = self._get_jump_points(new_node, 'lower-left')
+                        jump_point_down = self._get_jump_points(new_node, 'down')
+                        jump_point_left = self._get_jump_points(new_node, 'left')
+                        jump_point_lf = self._get_jump_points(new_node, 'lower-left')
+                        if len(jump_point_down) != 0:
+                            jump_points.extend(jump_point_down)
+                        if len(jump_point_left) != 0:
+                            jump_points.extend(jump_point_left)
+                        if len(jump_point_lf) != 0:
+                                jump_points.extend(jump_point_lf)
             elif current_position == 'B':
-                jump_point = new_node
-        return jump_point
+                jump_points.append(new_node)
+        return jump_points
 
     def _is_jump_point(self, node: Node, action_name: str) -> bool:
         """
@@ -184,50 +204,85 @@ class JPS(InformedSolver):
         :return: True - if node is jump point, False - otherwise
         """
 
+        if action_name == 'up' or action_name == 'down':
+            is_jump_point = self._check_vertical(node, action_name)
+        elif action_name == 'right' or action_name == 'left':
+            is_jump_point = self._check_horizontal(node, action_name)
+        else:
+            is_jump_point = self._check_diag(node, action_name)
+        return is_jump_point
+
+    def _check_diag(self, node: Node, action_name: str) -> bool:
+        actions_to_check = {
+            'upper-right': {
+                'row': 'down',
+                'column': 'left',
+            },
+            'lower-right': {
+                'row': 'up',
+                'column': 'left',
+            },
+            'upper-left': {
+                'row': 'down',
+                'column': 'right',
+            },
+            'lower-left': {
+                'row': 'up',
+                'column': 'right',
+            },
+        }
+        get_row, get_column = itemgetter(0), itemgetter(1)
+        current_row, current_column = get_row(node.data), get_column(node.data)
+        row_to_check = current_row + get_row(self.ACTIONS[actions_to_check[action_name]['row']])
+        column_to_check = current_column + get_column(self.ACTIONS[actions_to_check[action_name]['column']])
+        width, height = self._maze.get_maze_shape()
+        is_jump_point = False
+        if (0 < row_to_check < height - 1) and (self._maze.processed_maze()[row_to_check][current_column] == 0):
+            new_column = current_column + get_column(self.ACTIONS[actions_to_check[action_name]['column']])
+            if (0 < new_column < width - 1) and (self._maze.processed_maze()[row_to_check][new_column] == 1):
+                is_jump_point = True
+        if (0 < column_to_check < width - 1) and (self._maze.processed_maze()[current_row][column_to_check] == 0):
+            new_row = current_row + get_row(self.ACTIONS[actions_to_check[action_name]['row']])
+            if (0 < new_row < height - 1) and (self._maze.processed_maze()[new_row][column_to_check] == 1):
+                is_jump_point = True
+        return is_jump_point
+
+    def _check_vertical(self, node: Node, action_name: str) -> bool:
         is_jump_point = False
         get_row, get_column = itemgetter(0), itemgetter(1)
         current_row, current_column = get_row(node.data), get_column(node.data)
         width, height = self._maze.get_maze_shape()
-        if action_name == 'up' or action_name == 'down':
-            column_left = current_column + get_column(self.ACTIONS['left'])
-            column_right = current_column + get_column(self.ACTIONS['right'])
-            if (0 < column_left < width-1) and (self._maze.processed_maze()[current_row][column_left] == 0):
+        column_left = current_column + get_column(self.ACTIONS['left'])
+        column_right = current_column + get_column(self.ACTIONS['right'])
+        if (0 < column_left < width - 1) and (self._maze.processed_maze()[current_row][column_left] == 0):
+            row_diag = current_row + get_row(self.ACTIONS[action_name])
+            column_left_diag = current_column + get_column(self.ACTIONS['left'])
+            if (0 < row_diag < height-1) and (0 < column_left_diag < width-1) and (self._maze.processed_maze()[row_diag][column_left_diag] == 1):
                 is_jump_point = True
-            if (0 < column_right < width-1) and (self._maze.processed_maze()[current_row][column_right] == 0):
+        if (0 < column_right < width - 1) and (self._maze.processed_maze()[current_row][column_right] == 0):
+            row_diag = current_row + get_row(self.ACTIONS[action_name])
+            column_right_diag = current_column + get_column(self.ACTIONS['right'])
+            if (0 < row_diag < height-1) and (0 < column_right_diag < width-1) and (self._maze.processed_maze()[row_diag][column_right_diag] == 1):
                 is_jump_point = True
-        elif action_name == 'right' or action_name == 'left':
-            row_up = current_row + get_row(self.ACTIONS['up'])
-            row_down = current_row + get_row(self.ACTIONS['down'])
-            if (0 < row_up < height-1) and (self._maze.processed_maze()[row_up][current_column] == 0):
+        return is_jump_point
+
+    def _check_horizontal(self, node: Node, action_name: str) -> bool:
+        is_jump_point = False
+        get_row, get_column = itemgetter(0), itemgetter(1)
+        current_row, current_column = get_row(node.data), get_column(node.data)
+        width, height = self._maze.get_maze_shape()
+        row_up = current_row + get_row(self.ACTIONS['up'])
+        row_down = current_row + get_row(self.ACTIONS['down'])
+        if (0 < row_up < height - 1) and (self._maze.processed_maze()[row_up][current_column] == 0):
+            column_diag = current_column + get_column(self.ACTIONS[action_name])
+            row_diag_up = current_row + get_row(self.ACTIONS['up'])
+            if (0 < column_diag < width - 1) and (0 < row_diag_up < height - 1) and (
+                    self._maze.processed_maze()[row_diag_up][column_diag] == 1):
                 is_jump_point = True
-            if (0 < row_down < height-1) and (self._maze.processed_maze()[row_down][current_column] == 0):
-                is_jump_point = True
-        elif action_name == 'upper-right':
-            row_down = current_row + get_row(self.ACTIONS['down'])
-            column_left = current_column + get_column(self.ACTIONS['left'])
-            if (0 < row_down < height-1) and (self._maze.processed_maze()[row_down][current_column] == 0):
-                is_jump_point = True
-            if (0 < column_left < width-1) and (self._maze.processed_maze()[current_row][column_left] == 0):
-                is_jump_point = True
-        elif action_name == 'lower-right':
-            row_up = current_row + get_row(self.ACTIONS['up'])
-            column_left = current_column + get_column(self.ACTIONS['left'])
-            if (0 < row_up < height-1) and (self._maze.processed_maze()[row_up][current_column] == 0):
-                is_jump_point = True
-            if (0 < column_left < width-1) and (self._maze.processed_maze()[current_row][column_left] == 0):
-                is_jump_point = True
-        elif action_name == 'upper-left':
-            row_down = current_row + get_row(self.ACTIONS['down'])
-            column_right = current_column + get_column(self.ACTIONS['right'])
-            if (0 < row_down < height-1) and (self._maze.processed_maze()[row_down][current_column] == 0):
-                is_jump_point = True
-            if (0 < column_right <width-1) and (self._maze.processed_maze()[current_row][column_right] == 0):
-                is_jump_point = True
-        elif action_name == 'lower-left':
-            row_up = current_row + get_row(self.ACTIONS['up'])
-            column_right = current_column + get_column(self.ACTIONS['right'])
-            if (0 < row_up < height-1) and (self._maze.processed_maze()[row_up][current_column] == 0):
-                is_jump_point = True
-            if (0 < column_right < width-1) and (self._maze.processed_maze()[current_row][column_right] == 0):
+        if (0 < row_down < height - 1) and (self._maze.processed_maze()[row_down][current_column] == 0):
+            column_diag = current_column + get_column(self.ACTIONS[action_name])
+            row_diag_down = current_row + get_row(self.ACTIONS['down'])
+            if (0 < column_diag < width - 1) and (0 < row_diag_down < height - 1) and (
+                self._maze.processed_maze()[row_diag_down][column_diag] == 1):
                 is_jump_point = True
         return is_jump_point
