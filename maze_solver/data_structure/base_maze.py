@@ -1,3 +1,5 @@
+from typing import Tuple
+
 class Maze:
     def __init__(self, file_path):
         self._maze = self._read_maze_from_file(file_path)
@@ -8,11 +10,12 @@ class Maze:
     def processed_maze(self):
         return self._maze
 
-    def get_maze_shape(self):
-        '''
+    def get_maze_shape(self) -> Tuple[int, int]:
+        """
+        Get maze width and height.
 
         :return: width, height
-        '''
+        """
         return self._maze_width, self._maze_height
 
     def get_start(self):
