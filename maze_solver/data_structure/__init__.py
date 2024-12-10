@@ -1,4 +1,5 @@
 from .base_maze import Maze
-from .node import Node
+from .node import GraphNode
+from .double_linked_list import DoubleLinkedList
 
-__all__ = ['Node', 'Maze']
+__all__ = ['GraphNode', 'Maze', 'DoubleLinkedList']
