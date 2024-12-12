@@ -1,5 +1,6 @@
 from typing import Union
 
+from . import GraphNode
 from .node import ListNode
 
 class DoubleLinkedList:
@@ -8,7 +9,7 @@ class DoubleLinkedList:
         self._tail: Union[ListNode, None] = None
         self._size: int = 0
 
-    def __contains__(self, data):
+    def __contains__(self, data: GraphNode):
         is_data = False
         current_node = self.head
         while current_node is not None:
@@ -42,7 +43,7 @@ class DoubleLinkedList:
     def size(self, new_size):
         self._size = new_size
 
-    def append(self, data):
+    def append(self, data: GraphNode):
         new_node = ListNode(data)
         if self.is_empty():
             self.head = new_node
@@ -53,7 +54,7 @@ class DoubleLinkedList:
             self.tail = new_node
         self.size += 1
 
-    def remove(self, index):
+    def remove(self, index: int = 0):
         if abs(index) > self.size:
             raise ValueError("Index out of range.")
         if index < 0:

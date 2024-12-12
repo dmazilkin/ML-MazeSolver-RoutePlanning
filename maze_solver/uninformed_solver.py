@@ -13,6 +13,13 @@ class UninformedSolver:
         'dfs': -1,
         'bfs': 0,
     }
+    # Possible actions
+    ACTIONS = {
+        'up': (-1, 0),
+         'down': (1, 0),
+         'left': (0, -1),
+         'right': (0, 1),
+    }
 
     # Rectangle size in pixels
     RECTANGLE_SIZE = 25
@@ -133,18 +140,13 @@ class UninformedSolver:
         :return: possible neighbors
         """
 
-        actions = {
-            'up': (-1, 0),
-            'down': (1, 0),
-            'left': (0, -1),
-            'right': (0, 1),
-        }
+
         get_row, get_column = itemgetter(0), itemgetter(1)
         neighbors = []
 
-        for action in actions:
-            row = get_row(actions[action]) + get_row(node.data)
-            column = get_column(actions[action]) + get_column(node.data)
+        for action in self.ACTIONS:
+            row = get_row(self.ACTIONS[action]) + get_row(node.data)
+            column = get_column(self.ACTIONS[action]) + get_column(node.data)
             width, height = self._maze.get_maze_shape()
             if 0 < row < height-1 and 0 < column < width-1:
                 if self._maze.processed_maze()[row][column] != 0:
