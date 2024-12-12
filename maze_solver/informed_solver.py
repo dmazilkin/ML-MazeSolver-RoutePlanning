@@ -1,11 +1,12 @@
 from operator import itemgetter
-from typing import List, Union, Tuple
-from queue import PriorityQueue
+from typing import List, Union, Tuple, Set
 
 from .uninformed_solver import UninformedSolver
-from .data_structure.node import Node
+from .data_structure.queue import PriorityQueue
+from .data_structure.node import GraphNode
+from .helpers import *
 
-class InformedSolver(UninformedSolver):
+class AStar(UninformedSolver):
     # Possible heuristic methods
     HEURISTIC_METHODS = (
         'manhattan',
@@ -31,10 +32,12 @@ class InformedSolver(UninformedSolver):
 
         if heuristic_method not in self.HEURISTIC_METHODS:
             raise NameError('No such heuristic method.')
-        solution, explored = self._solve_maze(method=heuristic_method)
+        (solution, explored), time = self._solve_maze(method=heuristic_method)
+        save_results(self._file_name, f'a_star_{heuristic_method}'.format(heuristic_method=heuristic_method), len(solution), len(explored), time)
         self._save_solution_to_jpeg(solution, explored, heuristic_method, show_explored)
 
-    def _solve_maze(self, method):
+    @measure_time
+    def _solve_maze(self, method) -> Tuple[Set[GraphNode], Set[GraphNode]]:
         """
         Solve maze with chosen uninformed algorithm.
 
@@ -44,14 +47,14 @@ class InformedSolver(UninformedSolver):
 
         queue = PriorityQueue()
         explored = set()
-        start_node = Node(data=self._maze.get_start())
+        start_node = GraphNode(data=self._maze.get_start())
         stop_node = self._maze.get_stop()
         found_node = None
 
-        queue.put((self._get_heuristic(start_node, method=method), id(start_node), start_node))
+        queue.put(start_node, self._get_heuristic(start_node, method=method))
 
-        while not queue.empty():
-            _, _, node = queue.get()
+        while not queue.is_empty():
+            node = queue.pop()
             explored.add(node.data)
             if node.data == stop_node:
                 found_node = node
@@ -60,7 +63,7 @@ class InformedSolver(UninformedSolver):
                 neighbors = [neighbor for neighbor in self._expand_node(node) if neighbor.data not in explored]
                 if len(neighbors) != 0:
                     for neighbor in neighbors:
-                        queue.put((self._get_heuristic(neighbor, method=method), id(neighbor), neighbor))
+                        queue.put(neighbor, self._get_heuristic(neighbor, method=method))
         solution = self._get_solution_path(found_node)
         return solution, explored
 
@@ -87,7 +90,7 @@ class InformedSolver(UninformedSolver):
             raise NameError('No such method for heuristic function.')
         return value + node.cost
 
-class JPS(InformedSolver):
+class JPS(AStar):
     # Possible actions for JPS maze solver
     ACTIONS = {
         'up': (-1, 0),
@@ -109,7 +112,19 @@ class JPS(InformedSolver):
 
         super().__init__(file_path)
 
-    def _expand_node(self, node: Node) -> List[Node]:
+    def solve(self, heuristic_method: str = 'manhattan', show_explored: bool = False) -> None:
+        """
+        Solve maze with A* algorithm and chosen heuristic method.
+
+        :param heuristic_method: heuristic method to use
+        :param show_explored: show explored nodes
+        """
+
+        (solution, explored), time = self._solve_maze(method=heuristic_method)
+        save_results(self._file_name, f'a_star_{heuristic_method}'.format(heuristic_method=heuristic_method), len(solution), len(explored), time)
+        self._save_solution_to_jpeg(solution, explored, heuristic_method, show_explored)
+
+    def _expand_node(self, node: GraphNode) -> List[GraphNode]:
         """
         Find possible node neighbors to move to.
 
@@ -123,7 +138,7 @@ class JPS(InformedSolver):
             jump_points.extend(self._get_jump_points(node, action_name))
         return jump_points
 
-    def _get_jump_points(self, node: Node, action_name: str) -> Union[List[Node], List[None]]:
+    def _get_jump_points(self, node: GraphNode, action_name: str) -> Union[List[GraphNode], List[None]]:
         """
         Get jump points of a node.
 
@@ -136,7 +151,7 @@ class JPS(InformedSolver):
         row, column = self._calc_row_and_column(node, action_name)
         width, height = self._maze.get_maze_shape()
         if (0 < row < height-1) and (0 < column < width-1):
-            new_node = Node(data=(row, column), action=action_name, parent=node, cost=self._calc_cost(node, action_name))
+            new_node = GraphNode(data=(row, column), action=action_name, prev=node, cost=self._calc_cost(node, action_name))
             current_position = self._maze.processed_maze()[row][column]
             # Define base case for recursion
             if current_position == 'B':
@@ -155,7 +170,7 @@ class JPS(InformedSolver):
                         jump_points.extend(self._jump_diagonal(new_node, action_name))
         return jump_points
 
-    def _is_jump_point(self, node: Node, action_name: str) -> bool:
+    def _is_jump_point(self, node: GraphNode, action_name: str) -> bool:
         """
         Check if node is jump point.
 
@@ -170,7 +185,7 @@ class JPS(InformedSolver):
             is_jump_point = self._check_diagonal(node, action_name)
         return is_jump_point
 
-    def _calc_row_and_column(self, node: Node, action_name: str) -> Tuple[int, int]:
+    def _calc_row_and_column(self, node: GraphNode, action_name: str) -> Tuple[int, int]:
         """
         Calculate row and column of a new node.
 
@@ -185,7 +200,7 @@ class JPS(InformedSolver):
         column = current_column + action_column
         return row, column
 
-    def _get_row_and_column_from_node(self, node: Node) -> Tuple[int, int]:
+    def _get_row_and_column_from_node(self, node: GraphNode) -> Tuple[int, int]:
         """
         Get row and column of node.
 
@@ -207,7 +222,7 @@ class JPS(InformedSolver):
         get_row, get_column = itemgetter(0), itemgetter(1)
         return get_row(self.ACTIONS[action_name]), get_column(self.ACTIONS[action_name])
 
-    def _calc_cost(self, node: Node, action_name: str) -> Union[int, float]:
+    def _calc_cost(self, node: GraphNode, action_name: str) -> Union[int, float]:
         """
         Calculate cost of new node.
 
@@ -219,7 +234,7 @@ class JPS(InformedSolver):
         action_row, action_column = self._get_row_and_column_from_action(action_name)
         return node.cost + (action_row ** 2 + action_column ** 2) ** 0.5
 
-    def _jump_orthogonal(self, node: Node, action_name: str) -> Union[List[Node], List[None]]:
+    def _jump_orthogonal(self, node: GraphNode, action_name: str) -> Union[List[GraphNode], List[None]]:
         """
         Jump in orthogonal direction.
 
@@ -230,7 +245,7 @@ class JPS(InformedSolver):
 
         return self._get_jump_points(node, action_name)
 
-    def _jump_diagonal(self, node: Node, action_name: str) -> Union[List[Node], List[None]]:
+    def _jump_diagonal(self, node: GraphNode, action_name: str) -> Union[List[GraphNode], List[None]]:
         """
         Jump in diagonal direction.
 
@@ -251,7 +266,7 @@ class JPS(InformedSolver):
         jump_points.extend(self._get_jump_points(node, 'upper-right'))
         return jump_points
 
-    def _check_diagonal(self, node: Node, action_name: str) -> bool:
+    def _check_diagonal(self, node: GraphNode, action_name: str) -> bool:
         """
         Check if node in diagonal movement direction is a jump point.
 
@@ -296,7 +311,7 @@ class JPS(InformedSolver):
                 is_jump_point = True
         return is_jump_point
 
-    def _check_orthogonal(self, node: Node, action_name: str) -> bool:
+    def _check_orthogonal(self, node: GraphNode, action_name: str) -> bool:
         """
         Check if node in orthogonal movement direction is a jump point.
 

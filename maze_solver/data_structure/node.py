@@ -1,3 +1,5 @@
+from typing import Union
+
 class GraphNode:
     def __init__(self, data, prev: 'GraphNode' = None, action = None, cost = 0):
         self._data = data
@@ -46,3 +48,16 @@ class ListNode:
     @child.setter
     def child(self, child):
         self._child = child
+
+class BinaryTreeNode:
+    def __init__(self, data: GraphNode, key: Union[float, int]):
+        self._data = data
+        self._key = key
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def key(self):
+        return self._key
