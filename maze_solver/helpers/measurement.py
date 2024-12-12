@@ -7,7 +7,7 @@ def measure_time(func):
         start = time()
         func_output = func(*args, **kwargs)
         stop = time()
-        return stop - start, func_output
+        return func_output, stop - start
     return wrapper
 
 def save_results(maze_name: str, alg_name: str, solution: int, explored: int, time: float):

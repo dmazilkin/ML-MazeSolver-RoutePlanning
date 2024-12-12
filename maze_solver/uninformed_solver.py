@@ -1,9 +1,10 @@
 from operator import itemgetter
 from PIL import Image, ImageDraw
-from typing import Tuple, List
+from typing import Tuple, List, Set
 
+from .data_structure import DoubleLinkedList
 from .data_structure.base_maze import Maze
-from .data_structure.node import Node
+from .data_structure.node import GraphNode
 from .helpers import *
 
 class UninformedSolver:
@@ -11,6 +12,13 @@ class UninformedSolver:
     ALGORITHMS = {
         'dfs': -1,
         'bfs': 0,
+    }
+    # Possible actions
+    ACTIONS = {
+        'up': (-1, 0),
+         'down': (1, 0),
+         'left': (0, -1),
+         'right': (0, 1),
     }
 
     # Rectangle size in pixels
@@ -36,12 +44,11 @@ class UninformedSolver:
 
         if alg_name not in self.ALGORITHMS:
             raise NameError('No such algorithm.')
-        time, output = self._solve_maze(alg_name)
-        solution, explored = output
+        (solution, explored), time = self._solve_maze(alg_name)
         save_results(self._file_name, alg_name, len(solution), len(explored), time)
         self._save_solution_to_jpeg(solution, explored, alg_name, show_explored)
 
-    def _save_solution_to_jpeg(self, solution, explored, alg_name, show_explored: bool) -> None:
+    def _save_solution_to_jpeg(self, solution: List[GraphNode], explored: List[GraphNode], alg_name: str, show_explored: bool) -> None:
         """
         Save maze picture with solution path.
 
@@ -76,7 +83,7 @@ class UninformedSolver:
         img.save(f'./solutions/{self._file_name}_{alg_name}.jpeg')
 
     @measure_time
-    def _solve_maze(self, alg_name) -> Tuple[List[Node], List[Node]]:
+    def _solve_maze(self, alg_name) -> Tuple[Set[GraphNode], Set[GraphNode]]:
         """
         Solve maze with chosen uninformed algorithm.
 
@@ -84,24 +91,25 @@ class UninformedSolver:
         :return: solution and explored nodes
         """
 
-        stack = list()
+        stack: DoubleLinkedList = DoubleLinkedList()
+        explored: Set[GraphNode] = set()
         index = self.ALGORITHMS[alg_name]
-        explored = set()
-        start_node = Node(data=self._maze.get_start())
+        start_node = GraphNode(data=self._maze.get_start())
         stop_node = self._maze.get_stop()
         found_node = None
 
         stack.append(start_node)
 
-        while len(stack) != 0:
-            node = stack.pop(index)
+        while not stack.is_empty():
+            node = stack.remove(index)
+            explored.add(node.data)
             if node.data == stop_node:
                 found_node = node
                 break
             else:
-                neighbors = [neighbor for neighbor in self._expand_node(node) if neighbor.data not in explored]
-                stack.extend(neighbors)
-                explored.update([neighbor.data for neighbor in neighbors])
+                neighbors = [neighbor for neighbor in self._expand_node(node) if neighbor.data not in explored and neighbor.data not in stack]
+                for neighbor in neighbors:
+                    stack.append(neighbor)
 
         if found_node is not None:
             solution = self._get_solution_path(found_node)
@@ -109,7 +117,7 @@ class UninformedSolver:
         else:
             raise ValueError('No solution found.')
 
-    def _get_solution_path(self, target_node: Node) -> List[Node]:
+    def _get_solution_path(self, target_node: GraphNode) -> Set[GraphNode]:
         """
         Get solution path nodes from target node.
 
@@ -121,10 +129,10 @@ class UninformedSolver:
         node = target_node
         while node is not None:
             solution.add(node.data)
-            node = node.parent
+            node = node.prev
         return solution
 
-    def _expand_node(self, node: Node) -> List[Node]:
+    def _expand_node(self, node: GraphNode) -> List[GraphNode]:
         """
         Get possible node neighbors.
 
@@ -132,20 +140,15 @@ class UninformedSolver:
         :return: possible neighbors
         """
 
-        actions = {
-            'up': (-1, 0),
-            'down': (1, 0),
-            'left': (0, -1),
-            'right': (0, 1),
-        }
+
         get_row, get_column = itemgetter(0), itemgetter(1)
         neighbors = []
 
-        for action in actions:
-            row = get_row(actions[action]) + get_row(node.data)
-            column = get_column(actions[action]) + get_column(node.data)
+        for action in self.ACTIONS:
+            row = get_row(self.ACTIONS[action]) + get_row(node.data)
+            column = get_column(self.ACTIONS[action]) + get_column(node.data)
             width, height = self._maze.get_maze_shape()
             if 0 < row < height-1 and 0 < column < width-1:
                 if self._maze.processed_maze()[row][column] != 0:
-                    neighbors.append(Node(data=(row, column), action=action, parent=node, cost=node.cost+1))
+                    neighbors.append(GraphNode(data=(row, column), action=action, prev=node, cost=node.cost+1))
         return neighbors
