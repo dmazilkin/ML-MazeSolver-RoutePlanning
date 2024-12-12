@@ -107,7 +107,7 @@ class UninformedSolver:
                 found_node = node
                 break
             else:
-                neighbors = [neighbor for neighbor in self._expand_node(node) if neighbor.data not in explored and neighbor.data not in stack]
+                neighbors = [neighbor for neighbor in self._expand_node(node) if neighbor.data not in explored and neighbor not in stack]
                 for neighbor in neighbors:
                     stack.append(neighbor)
 

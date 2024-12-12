@@ -13,7 +13,7 @@ class DoubleLinkedList:
         is_data = False
         current_node = self.head
         while current_node is not None:
-            if current_node.data.data == data:
+            if current_node.data.data == data.data:
                 is_data = True
                 break
             current_node = current_node.child

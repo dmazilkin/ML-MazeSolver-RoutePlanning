@@ -6,7 +6,11 @@ class PriorityQueue:
     def __init__(self):
         # Initialize binary heap
         self._binary_heap: List[BinaryTreeNode] = list()
+        self._content = dict()
         self._vertices_count = 0
+
+    def __contains__(self, data: GraphNode):
+        return data.data in self._content
 
     def put(self, data: GraphNode, key: int) -> None:
         """
@@ -19,6 +23,10 @@ class PriorityQueue:
         # Create and add new node to the last layer in the most right position of binary heap
         new_node = BinaryTreeNode(data=data, key=key)
         self._binary_heap.append(new_node)
+        if data.data not in self._content:
+            self._content[data.data] = 1
+        else:
+            self._content[data.data] += 1
         self._vertices_count += 1
         # Check if new node bigger than parent node and move new node up
         self._siftup(self._vertices_count - 1)
@@ -36,6 +44,12 @@ class PriorityQueue:
         # Get root node to pop
         root_index = 0
         root = self._binary_heap[root_index]
+        # if root.data.data in self._content:
+        #     del self._content[root.data.data]
+        if self._content[root.data.data] == 1:
+            del self._content[root.data.data]
+        else:
+            self._content[root.data.data] -= 1
         # Get the last right node from the last layer and set as the root
         last_child = self._binary_heap.pop()
         self._vertices_count -= 1

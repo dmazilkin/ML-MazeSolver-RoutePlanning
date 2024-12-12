@@ -60,7 +60,7 @@ class AStar(UninformedSolver):
                 found_node = node
                 break
             else:
-                neighbors = [neighbor for neighbor in self._expand_node(node) if neighbor.data not in explored]
+                neighbors = [neighbor for neighbor in self._expand_node(node) if neighbor.data not in explored and neighbor not in queue]
                 if len(neighbors) != 0:
                     for neighbor in neighbors:
                         queue.put(neighbor, self._get_heuristic(neighbor, method=method))
@@ -85,7 +85,7 @@ class AStar(UninformedSolver):
         elif method == 'euclid':
             x = (get_row(node.data) - get_row(stop_node))**2
             y = (get_column(node.data) - get_column(stop_node)) ** 2
-            value = (x + y)**0.5
+            value = int((x + y)**0.5)
         else:
             raise NameError('No such method for heuristic function.')
         return value + node.cost
