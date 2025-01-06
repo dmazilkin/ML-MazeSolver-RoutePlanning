@@ -140,7 +140,6 @@ class UninformedSolver:
         :return: possible neighbors
         """
 
-
         get_row, get_column = itemgetter(0), itemgetter(1)
         neighbors = []
 

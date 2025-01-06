@@ -78,6 +78,12 @@ class PriorityQueue:
         return child_index_from_child[which](parent_index)
 
     def _siftup(self, child_index: int) -> None:
+        """
+        Moves the element at the given child index up the binary heap to maintain the heap property.
+
+        :param child_index: child index
+        """
+
         # Base case when child is root
         if child_index == 0:
             return
@@ -94,6 +100,12 @@ class PriorityQueue:
             self._siftup(parent_index)
 
     def _siftdown(self, parent_index: int) -> None:
+        """
+        Moves the element at the given parent index down the binary heap to maintain the heap property.
+
+        :param parent_index:
+        """
+
         # Get right and left children indexes
         right_child_index = self._get_child_index(parent_index, 'right')
         left_child_index = self._get_child_index(parent_index, 'left')
