@@ -1,0 +1,24 @@
+[project]
+name = "maze-solver"
+version = "0.1.0"
+description = "This repo contains maze solver, which is implemented with DFS, BFS, A* and JPS algorithms."
+authors = [
+    {name = "Dmitrii Mazilkin",email = "dim.mazilkin@gmail.com"}
+]
+license = {text = "None"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy (>=2.1.3,<3.0.0)",
+    "pandas (>=2.2.3,<3.0.0)",
+    "pillow (>=11.0.0,<12.0.0)",
+    "python-dateutil (>=2.9.post0,<3.0)",
+    "pytz (>=2024.2,<2025.0)",
+    "six (>=1.16.0,<2.0.0)",
+    "tzdata (>=2024.2,<2025.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
